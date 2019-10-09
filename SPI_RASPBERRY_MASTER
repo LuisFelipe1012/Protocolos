@@ -1,0 +1,34 @@
+# SPI RASPBERRY MASTER
+
+#!/usr/bin/python
+
+import spidev
+import time
+import RPi.GPIO as GPIO
+import sys
+
+CLK = 18
+MISO = 23
+MOSI = 24
+CS = 25
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(18,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
+
+spi = spidev.SpiDev()
+spi.open(0, 0)
+spi.max_speed_hz = 7629
+
+# INTEGRAR LA SALIDA DE DOS BYTES
+def write_pot(input):
+    msb = input >> 8
+    lsb = input & 0xFF
+    spi.xfer([msb, lsb])
+
+while True:
+    write_pot(0x00) # ENVIAR UN "0"
+    print("0")
+    while GPIO.input(18) == 1: # LEER EL PULSADOR
+        print("1")
+        write_pot(0x1FF) # ENVIAR UN "1"
+    time.sleep(1)
