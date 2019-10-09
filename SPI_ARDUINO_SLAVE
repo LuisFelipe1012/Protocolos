@@ -1,0 +1,45 @@
+//PROTOCOLO SPI, ARDUINO COMO ESCLAVO 
+
+#include<SPI.h>
+#define LEDpin 7 // PIN DE SALIDA
+
+volatile boolean received; // BANDERA
+volatile byte Slavereceived,Slavesend; // VARIABLES PARA RECIBIR Y ENVIAR DATOS
+int x=0;
+void setup()
+{
+  Serial.begin(9600);
+  pinMode(LEDpin,OUTPUT); // SALIDA AL LED              
+  pinMode(MISO,OUTPUT); // CONFIGURACION DE MISO COMO SALIDA ,ENVIO DE DATOS AL MASTER 
+
+  SPCR |= _BV(SPE); // SPI EN MODO ESCLAVO
+  received = false; // BANDERA DESACTIVADA
+
+  SPI.attachInterrupt(); // INTERRUPCIÓN COMUNICACIÓN SPI
+}
+
+ISR (SPI_STC_vect) // INTERRUPCIÓN
+{
+  Slavereceived = SPDR; // VALOR RECIBIDO DESDE EL MAESTRO
+  received = true; //BANDERA ACTIVA 
+}
+
+void loop()
+{
+  if(received) // ESTADO DE LA BANDERA
+  {
+      digitalWrite(LEDpin,LOW); // LED APAGADO
+      Serial.println("LED OFF");
+      while (Slavereceived==1) // SEÑAL "1" DESDE EL MAESTRO
+      {
+        digitalWrite(LEDpin,HIGH); // LED ENCENDIDO
+        Serial.println("LED ON");
+      }
+      
+  Slavesend=x;                             
+  SPDR = Slavesend; // ENVIAR DATOS AL MAESTRO POR SPDR 
+  delay(1000);
+  }
+}
+
+// TOMADO DE: https://circuitdigest.com/microcontroller-projects/arduino-spi-communication-tutorial
