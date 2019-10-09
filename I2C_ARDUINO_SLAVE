@@ -1,0 +1,60 @@
+// PROTOCOLO I2C, ARDUINO ESCLAVO
+// LECTURA Y ENVIO DE DATOS DEL SENSOR DE TEMPERATURA DS18B20
+#include <DallasTemperature.h> // BIBLIOTECA DEL SENSOR
+#include <OneWire.h> // PROTOCOLO DEL SENSOR ONEWIRE
+#include <Wire.h> // BIBLIOTECA PARA EL PROTOCOLO I2C
+
+#define SLAVE_ADDRESS 0x04
+
+// PIN CONEXION DEL SENSOR
+//  PROTOCOLO I2C A4(SDA),A5(SCL)
+const int pinDato = 9;
+int number = 0;
+int Temp = 0;
+
+OneWire oneWireObjeto(pinDato); // INSTANCIAS
+DallasTemperature sensorDS18B20(&oneWireObjeto);
+
+void setup() {
+  pinMode(13, OUTPUT); // PIN PARA EL LED
+  Serial.begin(9600); 
+  sensorDS18B20.begin(); // INCIAR EL SENSOR
+  Wire.begin(SLAVE_ADDRESS); // I2C COMO ESCLAVO
+  
+  Wire.onReceive(receiveData); // CALLBACKS PARA LA COMUNICACIÓN I2C
+  Wire.onRequest(sendData);
+  
+  Serial.println("Ready!");
+}
+
+void loop() {
+  sensorDS18B20.requestTemperatures(); // PEDIR EL VALOR DE TEMPERATURA
+  Serial.print("Temperatura sensor: ");
+  Temp = sensorDS18B20.getTempCByIndex(0); // TOMAR EL VALOR DE TEMPERATURA
+  Serial.println(Temp);
+  Serial.println(" C");
+  delay(1000);
+}
+
+// CALLBACK PARA RECIBIR DATOS
+void receiveData(int byteCount){
+  while(Wire.available()){
+    number = Wire.read(); // TOMAR EL DATO DEL MAESTRO
+    Serial.print("data received:");
+    Serial.println(number);
+ 
+      if (number == 1){ // VALOR ENVIADO POR EL MAESTRO
+        digitalWrite(13, HIGH); // LED ENCENDIDO
+      }    
+      else{
+        digitalWrite(13, LOW); // LED APAGADO
+      }
+  }
+}
+
+// CALLBACK PARA ENVIAR DATOS
+void sendData(){
+  Wire.write(Temp);
+}
+
+//TOMADO DE: https://oscarliang.com/raspberry-pi-arduino-connected-i2c/
