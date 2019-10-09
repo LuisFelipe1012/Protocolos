@@ -1,0 +1,21 @@
+# PROTOCOLO I2C RASPBERRY
+import time
+import smbus
+import RPi.GPIO as GPIO
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(18,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
+
+channel = 1 # CANAL 1
+from time import sleep
+address = 0x04 # ADRESS ARDUINO
+bus = smbus.SMBus(1) # BUS DE DATOS
+
+print("Hello")  
+while(True):
+    bus.write_byte(address,0) # ENVIAR UN '0' AL ARDUINO
+    print("0")
+    while GPIO.input(18) == 1:
+        print("1")
+        bus.write_byte(address,1) # ENVIAR UN '1' AL ARDUINO
+    time.sleep(1) # ESPERAR UN SEGUNDO
