@@ -1,0 +1,71 @@
+from flask import Flask,render_template,request,g
+
+#def webpage():
+#    app = Flask(__name__)
+#    print("Hello world")
+#    @app.route('/')
+#    def send():
+#       return temp
+
+#    if __name__ == '__main__':
+#        app.run(debug=True,host='192.168.4.1)
+
+
+# PROTOCOLO I2C
+import time
+import smbus
+import RPi.GPIO as GPIO
+import sqlite3
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(18,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
+
+channel = 1 # CANAL 1
+from time import sleep
+address = 0x04 # ADRESS ARDUINO
+bus = smbus.SMBus(channel) # BUS DE DATOS
+
+def connect_db():
+    return sqlite3.connect('algo.db')
+
+while(True):
+    conn=sqlite3.connect("algo.db")
+    c=conn.cursor()
+    temp=bus.read_byte(address) # OBTENER TEMPERATURA DEL ARDUINO
+    print(temp)
+    bus.write_byte(address,0) # ENVIAR UN '0' AL ARDUINO
+    if(temp>=28):
+        bus.write_byte(address,1) # ENVIAR UN '1' AL ARDUINO
+    app = Flask(__name__)
+    print("Hello world")
+    @app.route('/usuario')
+    def template():
+       return render_template("index.html")
+
+    @app.route('/temp')
+    def usuario():
+        return "<h1>Temperatura actual: " + str(temp) + "</h1>"
+
+    @app.before_request
+    def before_request():
+        g.db=connect_db()
+
+    @app.teardown_request
+    def teardown_request(exception):
+        if hasattr(g,'db'):
+            g.db.close()
+
+    if __name__ == '__main__':
+        app.run(debug=True,host='192.168.4.1')
+
+    time.sleep(1) # ESPERAR UN SEGUNDO
+
+    conn.execute("INSERT INTO temperaturas values(datetime('now'), (?))", (temp))
+    conn.commit()
+    conn.close()
+
+
+
+
+
+
